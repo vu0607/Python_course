@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sắp xếp hộp</title>
+    <style>
+        .container {
+            text-align: center;
+            margin-top: 50px;
+        }
+        .box {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            line-height: 50px;
+            margin: 5px;
+            font-size: 24px;
+            color: white;
+            background-color: teal;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Trò chơi Sắp xếp hộp</h1>
+    <div id="boxes-container">
+        <!-- Các hộp sẽ được hiển thị ở đây -->
+    </div>
+    <p>Số lần hoán đổi: <span id="moves">0</span></p>
+    <button onclick="resetGame()">Chơi lại</button>
+</div>
+
+<script>
+    let selectedBoxes = [];
+
+    // Hiển thị các hộp
+    function displayBoxes(boxes) {
+        const container = document.getElementById('boxes-container');
+        container.innerHTML = '';
+        boxes.forEach((num, index) => {
+            const box = document.createElement('div');
+            box.className = 'box';
+            box.innerText = num;
+            box.onclick = () => selectBox(index);
+            container.appendChild(box);
+        });
+    }
+
+    // Chọn một hộp để hoán đổi
+    function selectBox(index) {
+        selectedBoxes.push(index);
+        if (selectedBoxes.length === 2) {
+            swapBoxes(selectedBoxes[0], selectedBoxes[1]);
+            selectedBoxes = [];
+        }
+    }
+
+    // Gửi yêu cầu hoán đổi
+    function swapBoxes(index1, index2) {
+        fetch('/swap', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ index1: index1, index2: index2 })
+        })
+        .then(response => response.json())
+        .then(data => {
+            displayBoxes(data.boxes);
+            document.getElementById('moves').innerText = data.moves;
+            if (data.is_sorted) {
+                alert(`Chúc mừng! Bạn đã hoàn thành trò chơi trong ${data.moves} lần hoán đổi.`);
+            }
+        });
+    }
+
+    // Khởi tạo lại trò chơi
+    function resetGame() {
+        fetch('/reset', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            displayBoxes(data.boxes);
+            document.getElementById('moves').innerText = data.moves;
+        });
+    }
+
+    // Tải trạng thái trò chơi khi trang được mở
+    window.onload = function() {
+        resetGame();
+    }
+</script>
+</body>
+</html>
